@@ -43,7 +43,7 @@ echo "--------> building prometheus client from source..."
 wget https://github.com/digitalocean/prometheus-client-c/archive/refs/tags/v0.1.3.tar.gz -O prometheus-client-c-0.1.3.tar.gz
 tar -xf prometheus-client-c-0.1.3.tar.gz
 (mkdir -p prometheus-client-c-0.1.3/prom/build && cd prometheus-client-c-0.1.3/prom/build && cmake .. -DCMAKE_INSTALL_PREFIX=/usr && make && sudo make install) || echo "Warning: prometheus prom library build failed; prometheus support may be unavailable"
-(mkdir -p prometheus-client-c-0.1.3/promhttp/build && cd prometheus-client-c-0.1.3/promhttp/build && cmake .. -DCMAKE_INSTALL_PREFIX=/usr && make && sudo make install) || echo "Warning: prometheus promhttp library build failed; prometheus support may be unavailable"
+(mkdir -p prometheus-client-c-0.1.3/promhttp/build && cd prometheus-client-c-0.1.3/promhttp/build && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_C_FLAGS="-Wno-error=incompatible-pointer-types" && make && sudo make install) || echo "Warning: prometheus promhttp library build failed; prometheus support may be unavailable"
 sudo ldconfig
 rm -rf prometheus-client-c-0.1.3.tar.gz prometheus-client-c-0.1.3
 
