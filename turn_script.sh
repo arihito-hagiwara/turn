@@ -3,7 +3,7 @@
 ############## purpose                 : install coturn as a server          ########
 ############## verification on aws     : tested & verified on aws ec2        ########
 ############## platform                : aws ec2                             ########
-############## aws ubuntu version      : ubuntu 22.04 LTS                    ########
+############## aws ubuntu version      : ubuntu 24.04 LTS                    ########
 ############## coturn base version     : 4.8.0                               ########
 ############## dependent tools         : installs prometheus client as well  ########
 ############## file permissions        : chmod 777 install_coturn_on_aws_ec2.sh #####
@@ -35,15 +35,17 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
 
 ### install all dependent packages
 echo "--------> installing dependent packages..."
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y gcc make build-essential pkg-config libsystemd-dev musl-dev sqlite3 libsqlite3-dev
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libssl-dev libsqlite3-dev libevent-dev libpq-dev libmysqlclient-dev libhiredis-dev libmicrohttpd-dev
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y gcc make cmake build-essential pkg-config libsystemd-dev musl-dev sqlite3 libsqlite3-dev
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libssl-dev libsqlite3-dev libevent-dev libpq-dev default-libmysqlclient-dev libhiredis-dev libmicrohttpd-dev
 
-### download prometheus client libraries
-echo "--------> installing prometheus client..."
-wget https://github.com/digitalocean/prometheus-client-c/releases/download/v0.1.3/libprom-dev-0.1.3-Linux.deb
-wget https://github.com/digitalocean/prometheus-client-c/releases/download/v0.1.3/libpromhttp-dev-0.1.3-Linux.deb
-sudo dpkg -i ./libprom-dev-0.1.3-Linux.deb
-sudo dpkg -i ./libpromhttp-dev-0.1.3-Linux.deb
+### build prometheus client libraries from source (pre-built packages not compatible with Ubuntu 24.04)
+echo "--------> building prometheus client from source..."
+wget https://github.com/digitalocean/prometheus-client-c/archive/refs/tags/v0.1.3.tar.gz -O prometheus-client-c-0.1.3.tar.gz
+tar -xf prometheus-client-c-0.1.3.tar.gz
+(mkdir -p prometheus-client-c-0.1.3/prom/build && cd prometheus-client-c-0.1.3/prom/build && cmake .. -DCMAKE_INSTALL_PREFIX=/usr && make && sudo make install) || echo "Warning: prometheus prom library build failed; prometheus support may be unavailable"
+(mkdir -p prometheus-client-c-0.1.3/promhttp/build && cd prometheus-client-c-0.1.3/promhttp/build && cmake .. -DCMAKE_INSTALL_PREFIX=/usr && make && sudo make install) || echo "Warning: prometheus promhttp library build failed; prometheus support may be unavailable"
+sudo ldconfig
+rm -rf prometheus-client-c-0.1.3.tar.gz prometheus-client-c-0.1.3
 
 ### download coturn source code
 echo "--------> downloading coturn $coturn_package"
@@ -114,7 +116,7 @@ Type=notify
 EnvironmentFile=/etc/default/coturn
 ExecStart=/usr/local/bin/turnserver -c /etc/turnserver.conf --pidfile=
 Restart=on-failure
-InaccessibleDirectories=/home
+InaccessiblePaths=/home
 PrivateTmp=yes
 LimitCORE=infinity
 LimitNOFILE=1000000
